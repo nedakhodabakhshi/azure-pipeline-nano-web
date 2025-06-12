@@ -18,11 +18,15 @@ azure-pipeline-nano-web/
 ├── Dockerfile                # Apache + unzip + wget-based installer
 ├── azure-pipelines.yml       # Full CI/CD automation pipeline
 ├── images/                   # Screenshots (for GitHub)
-│   ├── myrepo.png
-│   ├── myimage.png
+│   ├── 01-Resource-Group.png
+│   ├── 02-Service-Connection.png
+│   ├── 03-Azure-Pipeline.png
+│   ├── 04-Azure-Pipeline-job.png
+│   ├── 05-Container-Registry.png
+│   ├── 06-Container-instance.png
+│   ├── 07-Container-FQDN.png
 │   ├── Container-Instance.png
-│   ├── WebApp.png
-│   ├── ResourceGroup.png
+│   ├── 08-Web-App.png
 ├── README.md                 # This file
 ```
 
