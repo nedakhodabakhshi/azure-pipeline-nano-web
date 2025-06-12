@@ -11,7 +11,7 @@ variables:
   imageName: 'nano-website-apache'
   containerName: 'nano-container'
   dnsName: 'nano-web-instance123'
-  zipUrl: 'https://www.tooplate.com/zip-templates/2108_dashboard.zip'
+  #zipUrl: 'https://www.tooplate.com/zip-templates/2108_dashboard.zip'
 
 steps:
 - task: AzureCLI@2
