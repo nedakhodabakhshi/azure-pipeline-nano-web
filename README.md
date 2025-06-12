@@ -103,40 +103,37 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      az acr show --name ${{ variables.acrName }} --resource-group ${{ variables.resourceGroup }} || \
-      az acr create --resource-group ${{ variables.resourceGroup }} \
-        --name ${{ variables.acrName }} --sku Basic --admin-enabled true
+      echo "✅ Starting automated deployment..."
 
+      echo "➡️ Enabling admin access on ACR..."
+      az acr update -n ${{ variables.acrName }} --admin-enabled true
+
+      echo "➡️ Creating ACR (if not exists)..."
+      az acr show --name ${{ variables.acrName }} --resource-group ${{ variables.resourceGroup }} ||       az acr create         --resource-group ${{ variables.resourceGroup }}         --name ${{ variables.acrName }}         --sku Basic         --admin-enabled true
+
+      echo "➡️ Login to ACR..."
       az acr login --name ${{ variables.acrName }}
 
+      echo "➡️ Build Docker image with wget-based web content..."
       docker build --build-arg ZIP_URL=${{ variables.zipUrl }} -t ${{ variables.imageName }} .
+
+      echo "➡️ Tag & push image to ACR..."
       docker tag ${{ variables.imageName }} ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest
       docker push ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest
 
+      echo "➡️ Get ACR credentials..."
+      ACR_USERNAME=$(az acr credential show -n ${{ variables.acrName }} --query username -o tsv)
+      ACR_PASSWORD=$(az acr credential show -n ${{ variables.acrName }} --query passwords[0].value -o tsv)
+
+      echo "➡️ Delete existing container if it exists..."
       az container delete --name ${{ variables.containerName }} --resource-group ${{ variables.resourceGroup }} --yes || true
 
-      az container create \
-        --resource-group ${{ variables.resourceGroup }} \
-        --name ${{ variables.containerName }} \
-        --image ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest \
-        --dns-name-label ${{ variables.dnsName }} \
-        --ports 80 \
-        --os-type Linux \
-        --cpu 1 \
-        --memory 1.5
-```
+      echo "➡️ Create container instance with ACR credentials..."
+      az container create         --resource-group ${{ variables.resourceGroup }}         --name ${{ variables.containerName }}         --image ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest         --dns-name-label ${{ variables.dnsName }}         --ports 80         --os-type Linux         --cpu 1         --memory 1.5         --registry-login-server ${{ variables.acrName }}.azurecr.io         --registry-username $ACR_USERNAME         --registry-password $ACR_PASSWORD
 
----
-
-## 📸 Screenshots
-
-| Preview | Description |
-|--------|-------------|
-| ![myrepo.png](images/myrepo.png) | Azure Container Registry |
-| ![myimage.png](images/myimage.png) | Image pushed to ACR |
-| ![Container-Instance.png](images/Container-Instance.png) | ACI deployment |
-| ![WebApp.png](images/WebApp.png) | Live dashboard UI |
-| ![ResourceGroup.png](images/ResourceGroup.png) | Resource group in Azure |
+      echo "✅ Deployment complete. Access the app at:"
+      echo "🌐 http://${{ variables.dnsName }}.centralus.azurecontainer.io"
+  displayName: 'Full CI/CD: Build Docker Image, Push to ACR, Deploy to ACI'
 
 ---
 
@@ -147,12 +144,5 @@ steps:
 - Azure service connection (`Azure-RM-Connection`)
 - This GitHub repo connected to a pipeline
 
-
-
-**Neda Khodabakhshi**  
-📧 `khodabakhshi.neda@gmail.com`  
-🔗 GitHub: [azure-pipeline-nano-web](https://github.com/nedakhodabakhshi/azure-pipeline-nano-web)
-
----
 
 > ⭐ If this repo helped you, feel free to star it and share!
