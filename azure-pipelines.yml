@@ -1,0 +1,59 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  resourceGroup: 'myResourceGroup'
+  location: 'centralus'
+  acrName: 'myrepo126'
+  imageName: 'nano-website-apache'
+  containerName: 'nano-container'
+  dnsName: 'nano-web-instance123'
+  zipUrl: 'https://www.tooplate.com/zip-templates/2108_dashboard.zip'
+
+steps:
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'Azure-RM-Connection'   # Confirmed name
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      echo "✅ Starting automated deployment..."
+
+      echo "➡️ Checking ACR (create if missing)..."
+      az acr show --name ${{ variables.acrName }} --resource-group ${{ variables.resourceGroup }} || \
+      az acr create \
+        --resource-group ${{ variables.resourceGroup }} \
+        --name ${{ variables.acrName }} \
+        --sku Basic \
+        --admin-enabled true
+
+      echo "➡️ Login to ACR..."
+      az acr login --name ${{ variables.acrName }}
+
+      echo "➡️ Building Docker image..."
+      docker build --build-arg ZIP_URL=${{ variables.zipUrl }} -t ${{ variables.imageName }} .
+
+      echo "➡️ Tag and push image to ACR..."
+      docker tag ${{ variables.imageName }} ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest
+      docker push ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest
+
+      echo "➡️ Delete existing container (if any)..."
+      az container delete --name ${{ variables.containerName }} --resource-group ${{ variables.resourceGroup }} --yes || true
+
+      echo "➡️ Create Azure Container Instance..."
+      az container create \
+        --resource-group ${{ variables.resourceGroup }} \
+        --name ${{ variables.containerName }} \
+        --image ${{ variables.acrName }}.azurecr.io/${{ variables.imageName }}:latest \
+        --dns-name-label ${{ variables.dnsName }} \
+        --ports 80 \
+        --os-type Linux \
+        --cpu 1 \
+        --memory 1.5
+
+      echo "✅ Done. Open your app at:"
+      echo "🌐 http://${{ variables.dnsName }}.centralus.azurecontainer.io"
+  displayName: 'Deploy Nano Web App via Azure CLI'
