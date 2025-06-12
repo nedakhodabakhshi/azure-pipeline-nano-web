@@ -138,18 +138,7 @@ steps:
 - Azure service connection (`Azure-RM-Connection`)
 - This GitHub repo connected to a pipeline
 
----
 
-## 💡 Next Steps
-
-- 🔐 Enable HTTPS with a custom domain
-- 📈 Add CI testing or linting
-- ☸️ Move to AKS for container orchestration
-- 🔄 Auto-cleanup or rollback steps
-
----
-
-## 🙋 Maintained By
 
 **Neda Khodabakhshi**  
 📧 `khodabakhshi.neda@gmail.com`  
